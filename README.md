@@ -7,7 +7,7 @@
     <li>The application features task repeat functionality based on daily or weekly intervals. Users can filter tasks by their completion status or their repeat frequency. A user-friendly interface is designed to handle tasks on both desktop and mobile devices, providing an interactive and smooth experience.</li>
     <br>
     <li><u><h3>About This Project</h3></u></li>
-        <ol>        
+        <ol type="1">        
             <li>React Components Structure:</li>
             <ul type="circle">
                 <li>The project is built using React, where different components handle specific parts of the Todo app.</li>
@@ -53,7 +53,7 @@
     </ol>
     <br>
     <li><u><h3>Skills Learned from this Project</h3></u></li>
-    <ol>
+    <ol type="1">
         <li>React State Management:</li>
         <ul type="circle">
             <li>Learned how to use React's useState hook to manage dynamic states and update the UI efficiently.</li>

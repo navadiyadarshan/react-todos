@@ -7,6 +7,6 @@ import Drag from './dragAndDrop.jsx'
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
-        <Drag/>
+        <App/>
     </StrictMode>
 )

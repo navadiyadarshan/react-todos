@@ -1,52 +1,21 @@
-import React, { useState } from 'react';
-import { loadTodosFromLocalStorage, saveTodosToLocalStorage } from './helper';
+import React, { useState, useEffect } from 'react';
+import { saveTodosToLocalStorage, loadTodosFromLocalStorage } from './helper';
+import { Tag, GripVertical, Filter } from 'lucide-react';
 
-export default function Prac() {
+export default function App() {
   const [todos, setTodos] = useState(loadTodosFromLocalStorage());
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [repeat, setRepeat] = useState('daily');
+  const [completedFilter, setCompletedFilter] = useState('all'); // For filtering by completed/incompleted
+  const [repeatFilter, setRepeatFilter] = useState('all'); // For filtering by daily/weekly
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
   const [draggedItemStyle, setDraggedItemStyle] = useState({});
   const [dragOverIndex, setDragOverIndex] = useState(null);
-  const [filter, setFilter] = useState('all'); 
 
-  const onDragStart = (index, e) => {
-    setDraggedItemIndex(index);
-    setDraggedItemStyle({
-      transform: 'scale(1.1)',
-      transition: 'transform 0.2s ease',
-      opacity: 0.7,
-    });
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const onDragOver = (index, e) => {
-    e.preventDefault();
-    setDragOverIndex(index);
-    console.log("2");
-  };
-
-  const onDrop = (index, e) => {
-    e.preventDefault();
-    if (draggedItemIndex === index) {
-      resetDragState();
-      return;
-    }
-
-    const updatedTodos = [...todos];
-    const [movedTodo] = updatedTodos.splice(draggedItemIndex, 1);
-    updatedTodos.splice(index, 0, movedTodo);
-
-    setTodos(updatedTodos);
-    saveTodosToLocalStorage(updatedTodos);
-    resetDragState();
-  };
-
-  const resetDragState = () => {
-    setDraggedItemIndex(null);
-    setDraggedItemStyle({});
-    setDragOverIndex(null);
-  };
+  useEffect(() => {
+    resetRepeatTasks();
+  }, [todos]);
 
   const handleAddTodo = () => {
     if (newName.trim() && newDescription.trim()) {
@@ -55,6 +24,8 @@ export default function Prac() {
         name: newName,
         description: newDescription,
         completed: false,
+        repeat,
+        createdAt: Date.now(),
       };
       const updatedTodos = [newTodo, ...todos];
       setTodos(updatedTodos);
@@ -78,15 +49,85 @@ export default function Prac() {
     saveTodosToLocalStorage(updatedTodos);
   };
 
+  // Reset repeat tasks based on daily or weekly intervals
+  const resetRepeatTasks = () => {
+    const currentTime = Date.now();
+    const updatedTodos = todos.map((todo) => {
+      if (todo.repeat !== 'none') {
+        const timeDiff = currentTime - todo.createdAt;
+        const isDueForReset =
+          (todo.repeat === 'daily' && timeDiff >= 86400000) || // 24 hours in ms
+          (todo.repeat === 'weekly' && timeDiff >= 604800000); // 7 days in ms
+
+        if (isDueForReset) {
+          return { ...todo, completed: false, createdAt: currentTime };
+        }
+      }
+      return todo;
+    });
+
+    // Only update the state if there's an actual change
+    const isUpdated = !updatedTodos.every((todo, index) => todo === todos[index]);
+    if (isUpdated) {
+      setTodos(updatedTodos);
+      saveTodosToLocalStorage(updatedTodos);
+    }
+  };
+
   const filteredTodos = todos.filter((todo) => {
-    if (filter === 'completed') {
-      return todo.completed;
-    }
-    if (filter === 'incompleted') {
-      return !todo.completed;
-    }
-    return true;
+    const isCompleted =
+      completedFilter === 'completed' ? todo.completed : completedFilter === 'incompleted' ? !todo.completed : true;
+
+    const isRepeat =
+      repeatFilter === 'daily' ? todo.repeat === 'daily' : repeatFilter === 'weekly' ? todo.repeat === 'weekly' : true;
+
+    return isCompleted && isRepeat;
   });
+
+  const onDragStart = (index, e) => {
+    if (!(completedFilter == "all" && repeatFilter == 'all')) return;
+    setDraggedItemIndex(index);
+    setDraggedItemStyle({
+      transform: 'scale(1.1)',
+      transition: 'transform 0.2s ease',
+      opacity: 0.7,
+    });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const onDragOver = (index, e) => {
+    if (!(completedFilter == "all" && repeatFilter == 'all')) return;
+    e.preventDefault();
+    setDragOverIndex(index);
+  };
+
+  const onDrop = (index, e) => {
+    if (!(completedFilter == "all" && repeatFilter == 'all')) return;
+    e.preventDefault();
+    if (draggedItemIndex === index) {
+      resetDragState();
+      return;
+    }
+
+    const updatedTodos = [...todos];
+    const [movedTodo] = updatedTodos.splice(draggedItemIndex, 1);
+    updatedTodos.splice(index, 0, movedTodo);
+
+    setTodos(updatedTodos);
+    saveTodosToLocalStorage(updatedTodos);
+    resetDragState();
+  };
+
+  const resetDragState = () => {
+    setDraggedItemIndex(null);
+    setDraggedItemStyle({});
+    setDragOverIndex(null);
+  };
+
+  const resetFilters = () => {
+    setCompletedFilter('all');
+    setRepeatFilter('all');
+  };
 
   return (
     <div className="min-h-screen bg-[#2A2A2A] p-8">
@@ -108,6 +149,15 @@ export default function Prac() {
             onChange={(e) => setNewDescription(e.target.value)}
             className="bg-[#3A3A3A] w-1/2 text-white placeholder:text-gray-400 p-2 rounded"
           />
+          <select
+            value={repeat}
+            onChange={(e) => setRepeat(e.target.value)}
+            className="bg-[#3A3A3A] text-white p-2 rounded"
+          >
+            <option value="none">None</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+          </select>
           <button
             onClick={handleAddTodo}
             className="whitespace-nowrap w-1/6 bg-orange-500 hover:bg-orange-600 text-white p-2 rounded"
@@ -116,74 +166,84 @@ export default function Prac() {
           </button>
         </div>
 
-        {/* Filter Dropdown */}
-        <div className="mb-4">
-          <label htmlFor="filter" className="text-white mr-2">Filter:</label>
-          <select
-            id="filter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="bg-[#3A3A3A] text-white p-2 rounded"
+        {/* Filter Section */}
+        <div className="mb-4 flex gap-4 justify-between">
+          <div className='text-white flex justify-center items-center'>
+            <Filter size={20} />
+          </div>
+          <div>
+            <label htmlFor="completedFilter" className="text-white mr-2">Completion:</label>
+            <select
+              id="completedFilter"
+              value={completedFilter}
+              onChange={(e) => setCompletedFilter(e.target.value)}
+              className="bg-[#3A3A3A] text-white p-2 rounded"
+            >
+              <option value="all">All</option>
+              <option value="completed">Completed</option>
+              <option value="incompleted">Incomplete</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="repeatFilter" className="text-white mr-2">Repeat:</label>
+            <select
+              id="repeatFilter"
+              value={repeatFilter}
+              onChange={(e) => setRepeatFilter(e.target.value)}
+              className="bg-[#3A3A3A] text-white p-2 rounded"
+            >
+              <option value="all">All</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+
+          <button
+            onClick={resetFilters}
+            className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
           >
-            <option value="all">All</option>
-            <option value="completed">Completed</option>
-            <option value="incompleted">Incomplete</option>
-          </select>
+            Reset Filters
+          </button>
         </div>
 
         <div className="space-y-4">
           {filteredTodos.map((todo, index) => (
             <div
               key={todo.id}
-              className={`rounded-lg bg-[#3A3A3A] p-4 ${
-                dragOverIndex === index ? 'bg-gray-600' : ''
-              }`}
+              className={`rounded-lg bg-[#3A3A3A] p-4 ${dragOverIndex === index ? 'bg-gray-600' : ''}`}
               onDragStart={(e) => onDragStart(index, e)}
               onDragOver={(e) => onDragOver(index, e)}
               onDrop={(e) => onDrop(index, e)}
               draggable
               style={{
                 opacity: draggedItemIndex === index ? draggedItemStyle.opacity : 1,
-                transform:
-                  draggedItemIndex === index ? draggedItemStyle.transform : 'scale(1)',
-                transition:
-                  draggedItemIndex === index ? draggedItemStyle.transition : 'none',
+                transform: draggedItemIndex === index ? draggedItemStyle.transform : 'scale(1)',
+                transition: draggedItemIndex === index ? draggedItemStyle.transition : 'none',
               }}
             >
               <div className="flex items-center gap-4">
-                <div
-                  className="cursor-pointer p-2 bg-gray-600 rounded"
-                  onDragStart={(e) => onDragStart(index, e)}
-                  draggable
-                >
-                  <span className="block w-2.5 h-0.5 bg-white mb-1"></span>
-                  <span className="block w-2.5 h-0.5 bg-white mb-1"></span>
-                  <span className="block w-2.5 h-0.5 bg-white"></span>
+                <div className="cursor-pointer p-2 bg-gray-600 rounded text-white">
+                  <GripVertical size={20} />
                 </div>
 
                 <div className="flex-1">
-                  <h2
-                    className={`text-xl font-semibold ${
-                      todo.completed ? 'text-gray-500 line-through' : 'text-orange-500'
-                    }`}
-                  >
+                  <h2 className={`text-xl font-semibold ${todo.completed ? 'text-gray-500 line-through' : 'text-orange-500'}`}>
                     {todo.name}
                   </h2>
-                  <p
-                    className={`mt-1 ${
-                      todo.completed ? 'text-gray-600' : 'text-gray-300'
-                    }`}
-                  >
+                  <p className={`mt-1 ${todo.completed ? 'text-gray-600' : 'text-gray-300'}`}>
                     {todo.description}
                   </p>
                 </div>
 
                 <div className="flex gap-2 items-center">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      todo.completed ? 'bg-green-500' : 'bg-red-500'
-                    }`}
-                  ></div>
+                  {todo.repeat !== 'none' && (
+                    <div className="mt-2">
+                      <Tag color={todo.repeat === 'daily' ? 'green' : 'blue'}>
+                        {todo.repeat === 'daily' ? 'Daily' : 'Weekly'}
+                      </Tag>
+                    </div>
+                  )}
                   <button
                     onClick={() => toggleComplete(todo.id)}
                     className="bg-green-500/10 text-green-500 hover:bg-green-500/20 p-2 rounded"

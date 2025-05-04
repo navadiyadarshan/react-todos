@@ -149,7 +149,9 @@ export default function App() {
             onChange={(e) => setNewDescription(e.target.value)}
             className="bg-[#3A3A3A] w-1/2 text-white placeholder:text-gray-400 p-2 rounded"
           />
+          <label htmlFor="todosTypes" className='hidden'></label>
           <select
+            id='todosTypes'
             value={repeat}
             onChange={(e) => setRepeat(e.target.value)}
             className="bg-[#3A3A3A] text-white p-2 rounded"

@@ -26,7 +26,31 @@
 
     <title>Todos | Darshan Navadiya</title>
     <link rel="icon" type="image/png" href="/public/logo.png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" href="/manifest.webmanifest" /><script>
+      let deferredPrompt;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the default prompt
+        e.preventDefault();
+        // Save the event so it can be triggered later
+        deferredPrompt = e;
+        
+        // Automatically show the install prompt
+        setTimeout(() => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the A2HS prompt');
+              } else {
+                console.log('User dismissed the A2HS prompt');
+              }
+              deferredPrompt = null; // Clear the prompt after user interacts
+            });
+          }
+        }, 1000); // Delay to make sure the page is fully loaded
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

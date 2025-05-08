@@ -466,7 +466,21 @@ export default defineConfig({
             "src": "ios/1024.png",
             "sizes": "1024x1024"
           }
-        ]     
+        ],
+        screenshots : [
+          {
+            src: '/screenshots/screenshot-1.png', // Screenshot for Desktop (Wide form factor)
+            sizes: '1200x800',
+            type: 'image/png',
+            form_factor: 'wide', // Set form factor to wide for desktop
+          },
+          {
+            src: '/screenshots/screenshot-2.png', // Screenshot for Mobile (Non-wide form factor)
+            sizes: '800x1280',
+            type: 'image/png',
+            form_factor: 'narrow', // Optional: to indicate mobile display
+          },
+        ]
       },
       workbox: {
         // Workbox configuration to handle caching strategies

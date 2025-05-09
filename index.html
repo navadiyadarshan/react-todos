@@ -26,34 +26,78 @@
 
     <title>Todos | Darshan Navadiya</title>
     <link rel="icon" type="image/png" href="/public/logo.png" />
-    <link rel="manifest" href="/manifest.webmanifest" /><script>
-      let deferredPrompt;
-
-      window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent the default prompt
-        e.preventDefault();
-        // Save the event so it can be triggered later
-        deferredPrompt = e;
-        
-        // Automatically show the install prompt
-        setTimeout(() => {
-          if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-              if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the A2HS prompt');
-              } else {
-                console.log('User dismissed the A2HS prompt');
-              }
-              deferredPrompt = null; // Clear the prompt after user interacts
-            });
-          }
-        }, 1000); // Delay to make sure the page is fully loaded
-      });
-    </script>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <style>
+      @keyframes up-down {
+        form{
+          transform: translateY(-3px);
+        }
+        to {
+          transform: translateY(3px);
+        }
+      }
+      #downloadButton {
+          position: fixed;
+          bottom: 20px;
+          right: 1rem;
+          padding: 12px 12px;
+          background-color: #007BFF;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          cursor: pointer;
+          display: block;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          z-index: 10001;
+          animation: up-down .8s infinite alternate linear;
+      }
+  </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <button id="downloadButton">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line-icon lucide-arrow-down-to-line"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg>
+    </button>
+    <script>
+      // Check if the browser supports the PWA installation
+      let installPromptEvent;
+
+      // Listen for the 'beforeinstallprompt' event to trigger the installation prompt
+      window.addEventListener('beforeinstallprompt', (event) => {
+          // Prevent the default browser prompt
+          event.preventDefault();
+
+          // Store the event so we can trigger it later
+          installPromptEvent = event;
+      
+          // Show the download button
+          const downloadButton = document.getElementById('downloadButton');
+          downloadButton.style.display = 'block'; // Display button
+      
+          // Add click event to the download button
+          downloadButton.addEventListener('click', () => {
+              // Show the installation prompt when the button is clicked
+              installPromptEvent.prompt();
+          
+              // Wait for the user to respond to the prompt
+              installPromptEvent.userChoice.then((choiceResult) => {
+                  if (choiceResult.outcome === 'accepted') {
+                      console.log('User accepted the PWA installation');
+                  } else {
+                      console.log('User dismissed the PWA installation');
+                  }
+                
+                  // Reset the event after the prompt is shown
+                  installPromptEvent = null;
+              });
+          });
+      });
+
+      // Optionally, listen for the 'appinstalled' event to confirm successful installation
+      window.addEventListener('appinstalled', () => {
+          console.log('PWA was installed');
+      });
+    </script>
   </body>
 </html>
